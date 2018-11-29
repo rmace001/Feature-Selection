@@ -3,20 +3,34 @@
 #include <fstream>
 #include <string>
 using namespace std;
-bool readData(string filename);
+bool readData(string filename, vector<vector<double>>& features, vector<int> &classType);
 
-bool readData(string filename, vector<float>& vec)
+bool readData(string filename, vector<vector<double>>& features, vector<int> &classType)
 {
   ifstream fin; 
   fin.open(filename);
-  float temp; 
+  double temp;
+  int row = 0;
+  int count = 2;
   if (!fin.is_open()){
     cout << "Could not open file: " << filename << endl;
     return false;
   }
   else {
+    fin >> temp;
+    classType.push_back( (int) temp);
+    features.push_back(vector<double>());
     while (fin >> temp){
-      vec.push_back(temp);
+      if (count <= 11){
+        features[row].push_back(temp); 
+        count++;
+      }
+      else{
+        row++;
+        count = 2;
+        classType.push_back( (int) temp);
+        features.push_back(vector<double>());
+      }
     }
   }
   fin.close();
@@ -26,31 +40,21 @@ bool readData(string filename, vector<float>& vec)
 
 int main(int argc, char** argv)
 {
-  vector<float> numericalData;
-  vector<string> data;
-  if (!readData(argv[1], numericalData))
+  //data vectors
+  vector<vector<double>> features;
+  vector<int> classType;
+  
+  //return if file not read properly
+  if (!readData(argv[1], features, classType))
     return 0;
   
-  cout << "Read test" << endl;
-  cout << "Data Values read: "<< numericalData.size() << endl;
-  for (short i=0; i<numericalData.size(); i++){
-    cout << "Data at " << i+1 << ": " << numericalData[i] << endl;
-    
-  }
+  //by this point, I should have two vectors: 
+  //one for the instance class type, 
+  //another 2D vector for the set of features per instance
+  
+ 
   
   
-  for (short i=0; i<numericalData.size(); i++){
-    cout << "Data at " << i+1 << ": " << numericalData[i] << endl;
-    
-  }
-  
-  for (short i=0; i<numericalData.size(); i++){
-    cout << "Data at " << i+1 << ": " << numericalData[i] << endl;
-    for (short i=0; i<numericalData.size(); i++){
-      cout << "Data at " << i+1 << ": " << numericalData[i] << endl;
-    
-    }
-  }
   
   
   
@@ -58,3 +62,31 @@ int main(int argc, char** argv)
   
   return 0;
 }
+
+
+
+
+
+/////////////////////////////////////////////////////////////////////
+/*Test that have passed:
+
+
+Test 1: Verify that you read everything correctly by printing the data and the vector sizes
+ for (int i=0; i<200; i++){
+    cout << classType[i] << "   ";
+    for (int j=0; j<10; j++){
+      cout << features[i][j] << "   ";  
+    }
+    cout << endl;
+  }
+  
+  cout << "Testing sizes of classType: " << classType.size() << endl;
+  cout << "Testing sizes of featuresROW: " << features.size() << endl;
+
+  for (int i=0; i<features.size(); i++){
+    cout << "Testing sizes of featuresCOL: " << i << ' '<<features[i].size() << endl;
+  }
+  
+
+
+*/
