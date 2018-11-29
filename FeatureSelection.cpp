@@ -5,7 +5,8 @@
 using namespace std;
 bool readData(string filename);
 
-bool readData(string filename, vector<float>& vec){
+bool readData(string filename, vector<float>& vec)
+{
   ifstream fin; 
   fin.open(filename);
   float temp; 
@@ -36,6 +37,24 @@ int main(int argc, char** argv)
     cout << "Data at " << i+1 << ": " << numericalData[i] << endl;
     
   }
+  
+  
+  for (short i=0; i<numericalData.size(); i++){
+    cout << "Data at " << i+1 << ": " << numericalData[i] << endl;
+    
+  }
+  
+  for (short i=0; i<numericalData.size(); i++){
+    cout << "Data at " << i+1 << ": " << numericalData[i] << endl;
+    for (short i=0; i<numericalData.size(); i++){
+      cout << "Data at " << i+1 << ": " << numericalData[i] << endl;
+    
+    }
+  }
+  
+  
+  
+  
   
   return 0;
 }
