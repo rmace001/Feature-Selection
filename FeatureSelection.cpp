@@ -4,6 +4,7 @@
 #include <string>
 using namespace std;
 bool readData(string filename, vector<vector<double>>& features, vector<int> &classType);
+void nearestNeighbor(vector<vector<double>>& features, vector<int> & classType);
 
 bool readData(string filename, vector<vector<double>>& features, vector<int> &classType)
 {
@@ -37,21 +38,49 @@ bool readData(string filename, vector<vector<double>>& features, vector<int> &cl
   return true;
 }
 
-
-int main(int argc, char** argv)
+void nearestNeighbor(vector<vector<double>>& features, vector<int> & classType)
+{
+  
+}
+int main()
 {
   //data vectors
   vector<vector<double>> features;
   vector<int> classType;
+  string inputfile; 
+  int choice; 
   
-  //return if file not read properly
-  if (!readData(argv[1], features, classType))
-    return 0;
   
   //by this point, I should have two vectors: 
   //one for the instance class type, 
   //another 2D vector for the set of features per instance
   
+  
+  cout << "Welcome to Rogelio Macedo's Feature Selection Algorithm." << endl;
+  cout << "Type the  name of the file to test: ";
+  cin >> inputfile;
+  cout << endl;
+  cout << "Type the number of the algorithm you you want to run." << endl << endl;
+  cout << "    1) Foward Selection" << endl;
+  cout << "    2) Backward Elimination" << endl;
+  cout << "    3) Rogelio's Special Algorithm." << endl << endl;
+  cin >> choice; 
+  //return if file not read properly
+  if (!readData(inputfile, features, classType))
+    return 0;
+  
+  cout << "This dataset has " << features[0].size() << " features (not including the class attribute), with "<< classType.size() <<" instances." << endl << endl;
+  cout << "Running nearest neighbor with all "<< features[0].size() << " features, using \"leaving-one-out\" evaluation, I get an \naccuracy of 75.4%" << endl << endl;
+  cout << "Beginning Search." << endl << endl;
+  
+  nearestNeighbor(features, classType);
+  
+  
+  
+  
+  // while (choice != -1){
+    
+  // }
  
   
   
