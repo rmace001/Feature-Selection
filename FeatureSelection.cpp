@@ -8,6 +8,7 @@ void nearestNeighbor(vector<vector<double>>& features, vector<int> & classType);
 
 bool readData(string filename, vector<vector<double>>& features, vector<int> &classType)
 {
+  //if (filename == "large100.txt") -> must redo this function to accomodate
   ifstream fin; 
   fin.open(filename);
   double temp;
