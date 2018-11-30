@@ -5,6 +5,7 @@
 using namespace std;
 bool readData(string filename, vector<vector<double>>& features, vector<int> &classType);
 void nearestNeighbor(vector<vector<double>>& features, vector<int> & classType);
+double leaveOneOutCrossValidation(vector<vector<double>>& features, vector<double> &currentFeatures, int &k);
 
 bool readData(string filename, vector<vector<double>>& features, vector<int> &classType)
 {
@@ -43,6 +44,17 @@ void nearestNeighbor(vector<vector<double>>& features, vector<int> & classType)
 {
   
 }
+
+double leaveOneOutCrossValidation(vector<vector<double>>& features, vector<double> &currentFeatures, int &k)
+{
+  double accuracy = 0.0; 
+  
+  
+  
+  
+  return accuracy; 
+}
+
 int main()
 {
   //data vectors
