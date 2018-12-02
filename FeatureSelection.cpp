@@ -1,11 +1,12 @@
 #include <iostream>
 #include <vector>
+#include <algorithm>
 #include <fstream>
 #include <string>
 using namespace std;
 bool readData(string filename, vector<vector<double>>& features, vector<int> &classType);
 void nearestNeighbor(vector<vector<double>>& features, vector<int> & classType);
-double leaveOneOutCrossValidation(vector<vector<double>>& features, vector<double> &currentFeatures, int &k);
+double leaveOneOutCrossValidation(vector<vector<double>>& features, vector<short> &currentFeatures, short featureToAdd);
 
 bool readData(string filename, vector<vector<double>>& features, vector<int> &classType)
 {
@@ -40,20 +41,38 @@ bool readData(string filename, vector<vector<double>>& features, vector<int> &cl
   return true;
 }
 
-void nearestNeighbor(vector<vector<double>>& features, vector<int> & classType)
-{
-  
-}
-
-double leaveOneOutCrossValidation(vector<vector<double>>& features, vector<double> &currentFeatures, int &k)
+double leaveOneOutCrossValidation(vector<vector<double>>& features, vector<short> &currentFeatures, short featureToAdd)
 {
   double accuracy = 0.0; 
-  
-  
-  
-  
   return accuracy; 
 }
+
+void nearestNeighbor(vector<vector<double>>& features, vector<int> & classType)
+{
+  vector<short> currentFeatureSet;
+  //Might want to have this function return a vector, which is vector best_features_so_far
+  for (short i=0; i<features.size(); i++){
+    cout << "On the " << i+1 << "\'th level of the search tree" << endl;
+    short featureToAddAtThisLevel; //In the notes, he has this defined as a set
+    double bestSoFarAccuracy = 0;
+    
+    for (short k=0; k<features[i].size(); k++){
+      
+      //if isEmpty(intersection(currentFeatureSet, k))
+      if ( find(currentFeatureSet.begin(), currentFeatureSet.end(), k) == currentFeatureSet.end() ){
+        cout << "--Considering adding the " << k+1 << "feature" << endl;
+        double accuracy; 
+        accuracy = leaveOneOutCrossValidation(features, currentFeatureSet, k); //why k+1?
+        if (accuracy > bestSoFarAccuracy) {
+          bestSoFarAccuracy = accuracy;
+          featureToAddAtThisLevel = k;
+        }
+      }
+    }
+  }
+}
+
+
 
 int main()
 {
@@ -113,7 +132,7 @@ int main()
 /*Test that have passed:
 
 
-Test 1: Verify that you read everything correctly by printing the data and the vector sizes
+Test 1: Verify that you read everything correctly (for small99.txt) by printing the data and the vector sizes
  for (int i=0; i<200; i++){
     cout << classType[i] << "   ";
     for (int j=0; j<10; j++){
