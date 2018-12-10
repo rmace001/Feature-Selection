@@ -3,11 +3,12 @@
 #include <algorithm>
 #include <fstream>
 #include <string>
+#include <limits>
 using namespace std;
 bool readData(string filename, vector<vector<double>>& features, vector<int> &classType);
 void nearestNeighbor(vector<vector<double>>& features, vector<int> & classType);
-double leaveOneOutCrossValidation(vector<vector<double>>& features, vector<short> &currentFeatures, short featureToAdd);
-
+double leave1OutCrossValidation(vector<vector<double>>& features, vector<int> &classType);
+void featureIsolate(vector<int>& tmpFeatureSet, vector<vector<double>>& zeroedFeatures);
 bool readData(string filename, vector<vector<double>>& features, vector<int> &classType)
 {
   //if (filename == "large100.txt") -> must redo this function to accomodate
@@ -41,36 +42,74 @@ bool readData(string filename, vector<vector<double>>& features, vector<int> &cl
   return true;
 }
 
-double leaveOneOutCrossValidation(vector<vector<double>>& features, vector<short> &currentFeatures, short featureToAdd)
+
+//assume you have all the features, and hardcode the distance equation
+
+//features[][] should consist of all zeros besides the features in question. I don't need featureToAdd...
+//however, featureToAdd should be passed in to the function that zero's out all features currentFeatureSet+featureToAdd 
+//might want to use a tempFeatureSet, and if its more accurate: currentFeatureSet=tempFeatureSet
+double leave1OutCrossValidation(vector<vector<double>>& features, vector<int> &classType)
 {
-  double accuracy = 0.0; 
-  return accuracy; 
+  double curMinDist = numeric_limits<double>::infinity();
+  double tmpDist = 0.0;
+  int nearestN = 0;
+  int skippedI = 0;
+  double correct = 0;
+  while (skippedI < 200){
+    for (int i=0; i<features.size(); i++){
+      tmpDist = 0.0;
+      for (int j=0; j<features[0].size(); j++){
+        if (i != skippedI){
+          tmpDist += ((features[skippedI][j]-features[i][j])*(features[skippedI][j]-features[i][j]));
+        }
+      }
+      //for every instance: we must see if it is a closer neighbor to skippedI
+      tmpDist = sqrt(tmpDist);
+      if (tmpDist < curMinDist){
+        curMinDist = tmpDist;
+        nearestN = i;
+      }
+      if (classType[skippedI] == classType[nearestN]){
+        correct++;
+      }
+    }
+  }
+  return (correct/200);
 }
 
+//Might want to have this function return a vector, which is vector currentFeatureSet
 void nearestNeighbor(vector<vector<double>>& features, vector<int> & classType)
 {
-  vector<short> currentFeatureSet;
-  //Might want to have this function return a vector, which is vector best_features_so_far
-  for (short i=0; i<features.size(); i++){
+  vector<int> currentFeatureSet;
+  for (int i=0; i<features.size(); i++){
     cout << "On the " << i+1 << "\'th level of the search tree" << endl;
-    short featureToAddAtThisLevel; //In the notes, he has this defined as a set
     double bestSoFarAccuracy = 0;
-    
-    for (short k=0; k<features[i].size(); k++){
-      
-      //if isEmpty(intersection(currentFeatureSet, k))
-      if ( find(currentFeatureSet.begin(), currentFeatureSet.end(), k) == currentFeatureSet.end() ){
+    double accuracy = 0;
+    for (int k=0; k<features[i].size(); k++){
+      if ( find(currentFeatureSet.begin(), currentFeatureSet.end(), k) == currentFeatureSet.end() ){ //if isEmpty(intersection(currentFeatureSet, k))
         cout << "--Considering adding the " << k+1 << "feature" << endl;
-        double accuracy; 
-        accuracy = leaveOneOutCrossValidation(features, currentFeatureSet, k); //why k+1?
+        
+        vector<vector<double>> zeroedFeatures = features;
+        vector<int> tmpFeatureSet = currentFeatureSet;
+        tmpFeatureSet.push_back(k);
+        featureIsolate(tmpFeatureSet, zeroedFeatures);
+        
+        
+        accuracy = leave1OutCrossValidation(zeroedFeatures, classType); //why k+1?
         if (accuracy > bestSoFarAccuracy) {
           bestSoFarAccuracy = accuracy;
-          featureToAddAtThisLevel = k;
+          currentFeatureSet.push_back(k); //featureToAddAtThisLevel = k
         }
       }
     }
   }
 }
+
+
+void featureIsolate(vector<int>& tmpFeatureSet, vector<vector<double>>& zeroedFeatures){
+  
+}
+
 
 
 
