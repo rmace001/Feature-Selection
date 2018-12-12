@@ -185,25 +185,15 @@ void featureIsolate(vector<int>& tmpFeatureSet, vector<vector<double>>& zeroedFe
 }
 
 
-void removeFeature(vector<int>& tmpFeatureSet, vector<vector<double>>& zeroedFeatures){
-  for (int i=0; i <zeroedFeatures.size(); i++){
-    for (int j=0; j<zeroedFeatures[0].size(); j++){
-      if ( find(tmpFeatureSet.begin(), tmpFeatureSet.end(), j) != tmpFeatureSet.end() ){ ////if k is in currentFeatures
-        zeroedFeatures[i][j] = 0.0;
-      }
-    }
-  }
-}
 
 
 
-
-
+//the cheat is to push it back again at the end. where is the end? where should i readd? 
 
 
 void backwardSearch(vector<vector<double>>& features, vector<int> & classType){
   vector<int> currentFeatureSet = {0,1,2,3,4,5,6,7,8,9};
-  vector<int> bestOverall;
+  vector<int> bestOverall = currentFeatureSet;
   bool breakflag = false;
   double levelBest=0;
   
@@ -221,29 +211,25 @@ void backwardSearch(vector<vector<double>>& features, vector<int> & classType){
     
     
     for (int k=0; k<features[i].size(); k++){
+      currentFeatureSet.erase(currentFeatureSet.begin()+k);
       
-      
-      
-      if ( find(currentFeatureSet.begin(), currentFeatureSet.end(), k) == currentFeatureSet.end() ){ //if isEmpty(intersection(currentFeatureSet, k))
-        cout << "--Considering adding the " << k+1 << "feature" << endl;
         
         
         
         
         vector<vector<double>> zeroedFeatures = features;
         vector<int> tmpFeatureSet = currentFeatureSet;
-        tmpFeatureSet.push_back(k);//remove instead of pushback, erase(begin+k)
         featureIsolate(tmpFeatureSet, zeroedFeatures);
         
         
         accuracy = leave1OutCrossValidation(zeroedFeatures, classType); //why k+1?
         
-      }
       if (accuracy > bestSoFarAccuracy) {
         cout << accuracy << endl;
         bestSoFarAccuracy = accuracy;
-        featureToAddAtThisLevel = k;
+        featureToAddAtThisLevel = k; //this is essentially featureToRemove
       }
+      currentFeatureSet.insert(currentFeatureSet.begin()+k,k);
     }
     if (levelBest < bestSoFarAccuracy){
       levelBest = bestSoFarAccuracy;
@@ -260,10 +246,10 @@ void backwardSearch(vector<vector<double>>& features, vector<int> & classType){
       cout << "(Warning, Accuracy has decreased! Continuing search in case of local maxima)" << endl; 
     }
     
+    cout << "On level " << i+1 << " we remove " << featureToAddAtThisLevel+1 << " to the  current set." << endl; 
+    currentFeatureSet.erase(currentFeatureSet.begin()+featureToAddAtThisLevel); //erase instead of push_back
+    bestOverall.erase(currentFeatureSet.begin()+featureToAddAtThisLevel);
     
-    cout << "On level " << i+1 << " we added " << featureToAddAtThisLevel+1 << " to the  current set." << endl; 
-    currentFeatureSet.push_back(featureToAddAtThisLevel); //remove instead of push_back
-    bestOverall.push_back(featureToAddAtThisLevel);
     if (!breakflag){
       bestOverall = currentFeatureSet;
     }
@@ -311,7 +297,7 @@ int main()
   }
   else if (choice == 2){
     cout << "This dataset has " << features[0].size() << " features (not including the class attribute), with "<< classType.size() <<" instances." << endl << endl;
-    cout << "Running nearest neighbor with all "<< features[0].size() << " features, using \"leaving-one-out\" evaluation, I get an \naccuracy of 75.4%" << endl << endl;
+    cout << "Running nearest neighbor with all "<< features[0].size() << " features, using \"leaving-one-out\" evaluation, I get an \naccuracy of " << leave1OutCrossValidation(features, classType)*100<< "%" << endl << endl;
     cout << "Beginning Search." << endl << endl;
     
     backwardSearch(features, classType);
