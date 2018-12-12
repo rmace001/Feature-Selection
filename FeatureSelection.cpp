@@ -6,7 +6,7 @@
 #include <limits>
 using namespace std;
 bool readData(string filename, vector<vector<double>>& features, vector<int> &classType);
-void nearestNeighbor(vector<vector<double>>& features, vector<int> & classType);
+vector<int>  nearestNeighbor(vector<vector<double>>& features, vector<int> & classType);
 double leave1OutCrossValidation(vector<vector<double>>& features, vector<int> &classType);
 void featureIsolate(vector<int>& tmpFeatureSet, vector<vector<double>>& zeroedFeatures);
 bool readData(string filename, vector<vector<double>>& features, vector<int> &classType)
@@ -50,41 +50,51 @@ bool readData(string filename, vector<vector<double>>& features, vector<int> &cl
 //might want to use a tempFeatureSet, and if its more accurate: currentFeatureSet=tempFeatureSet
 double leave1OutCrossValidation(vector<vector<double>>& features, vector<int> &classType)
 {
-  double curMinDist = numeric_limits<double>::infinity();
+//  double curMinDist = numeric_limits<double>::infinity();
   double tmpDist = 0.0;
   int nearestN = 0;
   int skippedI = 0;
   double correct = 0;
   while (skippedI < 200){
+    nearestN = 0;
+    double curMinDist = numeric_limits<double>::infinity();
     for (int i=0; i<features.size(); i++){
+      
       tmpDist = 0.0;
-      for (int j=0; j<features[0].size(); j++){
-        if (i != skippedI){
+      if (i != skippedI){
+        for (int j=0; j<features[0].size(); j++){
           tmpDist += ((features[skippedI][j]-features[i][j])*(features[skippedI][j]-features[i][j]));
         }
-      }
-      //for every instance: we must see if it is a closer neighbor to skippedI
-      tmpDist = sqrt(tmpDist);
-      if (tmpDist < curMinDist){
-        curMinDist = tmpDist;
-        nearestN = i;
-      }
-      if (classType[skippedI] == classType[nearestN]){
-        correct++;
+      
+        tmpDist = sqrt(tmpDist);
+        if (tmpDist < curMinDist){
+          curMinDist = tmpDist;
+          nearestN = i;
+        }
       }
     }
+    //cout << "nearestN: " << nearestN << endl;
+    if (classType[skippedI] == classType[nearestN]){
+      correct++;
+    }
+    skippedI++;
   }
+  cout << "correct: " << correct << endl;
   return (correct/200);
 }
 
 //Might want to have this function return a vector, which is vector currentFeatureSet
-void nearestNeighbor(vector<vector<double>>& features, vector<int> & classType)
+vector<int> nearestNeighbor(vector<vector<double>>& features, vector<int> & classType)
 {
   vector<int> currentFeatureSet;
+  vector<int> bestOverall;
+  bool breakflag = false;
+  double levelBest=0;
   for (int i=0; i<features.size(); i++){
     cout << "On the " << i+1 << "\'th level of the search tree" << endl;
     double bestSoFarAccuracy = 0;
     double accuracy = 0;
+    int featureToAddAtThisLevel;
     for (int k=0; k<features[i].size(); k++){
       if ( find(currentFeatureSet.begin(), currentFeatureSet.end(), k) == currentFeatureSet.end() ){ //if isEmpty(intersection(currentFeatureSet, k))
         cout << "--Considering adding the " << k+1 << "feature" << endl;
@@ -96,18 +106,56 @@ void nearestNeighbor(vector<vector<double>>& features, vector<int> & classType)
         
         
         accuracy = leave1OutCrossValidation(zeroedFeatures, classType); //why k+1?
-        if (accuracy > bestSoFarAccuracy) {
-          bestSoFarAccuracy = accuracy;
-          currentFeatureSet.push_back(k); //featureToAddAtThisLevel = k
-        }
+        
+      }
+      if (accuracy > bestSoFarAccuracy) {
+        cout << accuracy << endl;
+        bestSoFarAccuracy = accuracy;
+        featureToAddAtThisLevel = k;
       }
     }
+    if (levelBest < bestSoFarAccuracy){
+      levelBest = bestSoFarAccuracy;
+      breakflag = false;
+    }
+    else{
+      if (breakflag){
+        for (int i=0; i<bestOverall.size(); i++){
+          cout << bestOverall[i]+1 << ", ";
+        }
+        break;
+      }
+      breakflag = true;
+      cout << "(Warning, Accuracy has decreased! Continuing search in case of local maxima)" << endl; 
+    }
+    
+    
+    cout << "On level " << i+1 << " we added " << featureToAddAtThisLevel+1 << " to the  current set." << endl; 
+    currentFeatureSet.push_back(featureToAddAtThisLevel); //featureToAddAtThisLevel = k
+    bestOverall.push_back(featureToAddAtThisLevel);
+    if (!breakflag){
+      bestOverall = currentFeatureSet;
+    }
   }
+  return currentFeatureSet;
 }
 
 
 void featureIsolate(vector<int>& tmpFeatureSet, vector<vector<double>>& zeroedFeatures){
+  for (int i=0; i <zeroedFeatures.size(); i++){
+    for (int j=0; j<zeroedFeatures[0].size(); j++){
+      if ( find(tmpFeatureSet.begin(), tmpFeatureSet.end(), j) == tmpFeatureSet.end() ){
+        zeroedFeatures[i][j] = 0.0;
+      }
+    }
+  }
   
+  // for (int i=0; i<5; i++){
+  //   for (int j=0; j<10; j++){
+  //     cout << zeroedFeatures[i][j] << "   ";  
+  //   }
+  //   cout << endl;
+  // }
 }
 
 
@@ -144,9 +192,11 @@ int main()
   cout << "Running nearest neighbor with all "<< features[0].size() << " features, using \"leaving-one-out\" evaluation, I get an \naccuracy of 75.4%" << endl << endl;
   cout << "Beginning Search." << endl << endl;
   
-  nearestNeighbor(features, classType);
-  
-  
+  vector<int> bestFeatures = nearestNeighbor(features, classType);
+  // for (int i=0; i<bestFeatures.size(); i++){
+  //   cout << bestFeatures[i] << ", ";
+  // }
+  cout << endl;
   
   
   // while (choice != -1){
