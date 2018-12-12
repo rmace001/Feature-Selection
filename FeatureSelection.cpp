@@ -7,8 +7,31 @@
 using namespace std;
 bool readData(string filename, vector<vector<double>>& features, vector<int> &classType);
 vector<int>  nearestNeighbor(vector<vector<double>>& features, vector<int> & classType);
+void backwardSearch(vector<vector<double>>& features, vector<int> & classType);
 double leave1OutCrossValidation(vector<vector<double>>& features, vector<int> &classType);
 void featureIsolate(vector<int>& tmpFeatureSet, vector<vector<double>>& zeroedFeatures);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 bool readData(string filename, vector<vector<double>>& features, vector<int> &classType)
 {
   //if (filename == "large100.txt") -> must redo this function to accomodate
@@ -43,6 +66,17 @@ bool readData(string filename, vector<vector<double>>& features, vector<int> &cl
 }
 
 
+
+
+
+
+
+
+
+
+
+
+
 //assume you have all the features, and hardcode the distance equation
 
 //features[][] should consist of all zeros besides the features in question. I don't need featureToAdd...
@@ -50,7 +84,6 @@ bool readData(string filename, vector<vector<double>>& features, vector<int> &cl
 //might want to use a tempFeatureSet, and if its more accurate: currentFeatureSet=tempFeatureSet
 double leave1OutCrossValidation(vector<vector<double>>& features, vector<int> &classType)
 {
-//  double curMinDist = numeric_limits<double>::infinity();
   double tmpDist = 0.0;
   int nearestN = 0;
   int skippedI = 0;
@@ -73,7 +106,6 @@ double leave1OutCrossValidation(vector<vector<double>>& features, vector<int> &c
         }
       }
     }
-    //cout << "nearestN: " << nearestN << endl;
     if (classType[skippedI] == classType[nearestN]){
       correct++;
     }
@@ -144,13 +176,100 @@ vector<int> nearestNeighbor(vector<vector<double>>& features, vector<int> & clas
 void featureIsolate(vector<int>& tmpFeatureSet, vector<vector<double>>& zeroedFeatures){
   for (int i=0; i <zeroedFeatures.size(); i++){
     for (int j=0; j<zeroedFeatures[0].size(); j++){
-      if ( find(tmpFeatureSet.begin(), tmpFeatureSet.end(), j) == tmpFeatureSet.end() ){
+      if ( find(tmpFeatureSet.begin(), tmpFeatureSet.end(), j) == tmpFeatureSet.end() ){ //if isEmpty(intersection(currentFeatureSet, k))
         zeroedFeatures[i][j] = 0.0;
       }
     }
   }
   
 }
+
+
+void removeFeature(vector<int>& tmpFeatureSet, vector<vector<double>>& zeroedFeatures){
+  for (int i=0; i <zeroedFeatures.size(); i++){
+    for (int j=0; j<zeroedFeatures[0].size(); j++){
+      if ( find(tmpFeatureSet.begin(), tmpFeatureSet.end(), j) != tmpFeatureSet.end() ){ ////if k is in currentFeatures
+        zeroedFeatures[i][j] = 0.0;
+      }
+    }
+  }
+}
+
+
+
+
+
+
+
+void backwardSearch(vector<vector<double>>& features, vector<int> & classType){
+  vector<int> currentFeatureSet = {0,1,2,3,4,5,6,7,8,9};
+  vector<int> bestOverall;
+  bool breakflag = false;
+  double levelBest=0;
+  
+  
+  
+  for (int i=0; i<features.size(); i++){
+    cout << "On the " << i+1 << "\'th level of the search tree" << endl;
+    
+    
+    
+    double bestSoFarAccuracy = 0;
+    double accuracy = 0;
+    int featureToAddAtThisLevel;
+    
+    
+    
+    for (int k=0; k<features[i].size(); k++){
+      
+      
+      
+      if ( find(currentFeatureSet.begin(), currentFeatureSet.end(), k) == currentFeatureSet.end() ){ //if isEmpty(intersection(currentFeatureSet, k))
+        cout << "--Considering adding the " << k+1 << "feature" << endl;
+        
+        
+        
+        
+        vector<vector<double>> zeroedFeatures = features;
+        vector<int> tmpFeatureSet = currentFeatureSet;
+        tmpFeatureSet.push_back(k);//remove instead of pushback, erase(begin+k)
+        featureIsolate(tmpFeatureSet, zeroedFeatures);
+        
+        
+        accuracy = leave1OutCrossValidation(zeroedFeatures, classType); //why k+1?
+        
+      }
+      if (accuracy > bestSoFarAccuracy) {
+        cout << accuracy << endl;
+        bestSoFarAccuracy = accuracy;
+        featureToAddAtThisLevel = k;
+      }
+    }
+    if (levelBest < bestSoFarAccuracy){
+      levelBest = bestSoFarAccuracy;
+      breakflag = false;
+    }
+    else{
+      if (breakflag){
+        for (int i=0; i<bestOverall.size(); i++){
+          cout << bestOverall[i]+1 << ", ";
+        }
+        break;
+      }
+      breakflag = true;
+      cout << "(Warning, Accuracy has decreased! Continuing search in case of local maxima)" << endl; 
+    }
+    
+    
+    cout << "On level " << i+1 << " we added " << featureToAddAtThisLevel+1 << " to the  current set." << endl; 
+    currentFeatureSet.push_back(featureToAddAtThisLevel); //remove instead of push_back
+    bestOverall.push_back(featureToAddAtThisLevel);
+    if (!breakflag){
+      bestOverall = currentFeatureSet;
+    }
+  }
+}
+
 
 
 
@@ -181,22 +300,28 @@ int main()
   //return if file not read properly
   if (!readData(inputfile, features, classType))
     return 0;
-  
-  cout << "This dataset has " << features[0].size() << " features (not including the class attribute), with "<< classType.size() <<" instances." << endl << endl;
-  cout << "Running nearest neighbor with all "<< features[0].size() << " features, using \"leaving-one-out\" evaluation, I get an \naccuracy of 75.4%" << endl << endl;
-  cout << "Beginning Search." << endl << endl;
-  
-  vector<int> bestFeatures = nearestNeighbor(features, classType);
-  // for (int i=0; i<bestFeatures.size(); i++){
-  //   cout << bestFeatures[i] << ", ";
-  // }
-  cout << endl;
-  
-  
-  // while (choice != -1){
+  if (choice == 1){
+    cout << "This dataset has " << features[0].size() << " features (not including the class attribute), with "<< classType.size() <<" instances." << endl << endl;
+    cout << "Running nearest neighbor with all "<< features[0].size() << " features, using \"leaving-one-out\" evaluation, I get an \naccuracy of " << leave1OutCrossValidation(features, classType)*100<< "%" << endl << endl;
+    cout << "Beginning Search." << endl << endl;
     
-  // }
- 
+    vector<int> bestFeatures = nearestNeighbor(features, classType);
+  
+    cout << endl;
+  }
+  else if (choice == 2){
+    cout << "This dataset has " << features[0].size() << " features (not including the class attribute), with "<< classType.size() <<" instances." << endl << endl;
+    cout << "Running nearest neighbor with all "<< features[0].size() << " features, using \"leaving-one-out\" evaluation, I get an \naccuracy of 75.4%" << endl << endl;
+    cout << "Beginning Search." << endl << endl;
+    
+    backwardSearch(features, classType);
+    cout << endl;
+  }
+  else{
+    
+    cout << endl;
+  }
+  
   
   
   
