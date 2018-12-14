@@ -210,11 +210,11 @@ void backwardSearch(vector<vector<double>>& features, vector<int> & classType){
     
     
     
-    for (int k=0; k<features[i].size(); k++){
+    for (int k=0; k<currentFeatureSet.size(); k++){ //1:04pm: changing features[i].size() to currentFeatures.size() 
       currentFeatureSet.erase(currentFeatureSet.begin()+k);
       
         
-        
+        cout << "current k: " << k << endl;
         
         
         vector<vector<double>> zeroedFeatures = features;
@@ -222,7 +222,7 @@ void backwardSearch(vector<vector<double>>& features, vector<int> & classType){
         featureIsolate(tmpFeatureSet, zeroedFeatures);
         
         
-        accuracy = leave1OutCrossValidation(zeroedFeatures, classType); //why k+1?
+        accuracy = leave1OutCrossValidation(zeroedFeatures, classType); 
         
       if (accuracy > bestSoFarAccuracy) {
         cout << accuracy << endl;
@@ -238,7 +238,7 @@ void backwardSearch(vector<vector<double>>& features, vector<int> & classType){
     else{
       if (breakflag){
         for (int i=0; i<bestOverall.size(); i++){
-          cout << bestOverall[i]+1 << ", ";
+          cout << bestOverall.at(i)+1 << ", ";
         }
         break;
       }
@@ -248,7 +248,7 @@ void backwardSearch(vector<vector<double>>& features, vector<int> & classType){
     
     cout << "On level " << i+1 << " we remove " << featureToAddAtThisLevel+1 << " to the  current set." << endl; 
     currentFeatureSet.erase(currentFeatureSet.begin()+featureToAddAtThisLevel); //erase instead of push_back
-    bestOverall.erase(currentFeatureSet.begin()+featureToAddAtThisLevel);
+    bestOverall.erase(bestOverall.begin()+featureToAddAtThisLevel);
     
     if (!breakflag){
       bestOverall = currentFeatureSet;
