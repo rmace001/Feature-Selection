@@ -169,13 +169,11 @@ vector<int> nearestNeighbor(vector<vector<double>>& features, vector<int> & clas
   double globalBest=0;
   double levelBest=0;
   for (int i=0; i<features[0].size(); i++){
-    //cout << "On the " << i+1 << "\'th level of the search tree" << endl;
     double bestSoFarAccuracy = 0;
     double accuracy = 0;
     int featureToAddAtThisLevel;
     for (int k=0; k<features[i].size(); k++){
       if ( find(currentFeatureSet.begin(), currentFeatureSet.end(), k) == currentFeatureSet.end() ){ //if isEmpty(intersection(currentFeatureSet, k))
-        //cout << "--Considering adding the " << k+1 << "feature" << endl;
         
         vector<vector<double>> zeroedFeatures = features;
         vector<int> tmpFeatureSet = currentFeatureSet;
@@ -211,8 +209,7 @@ vector<int> nearestNeighbor(vector<vector<double>>& features, vector<int> & clas
     }
     
     if ( find(currentFeatureSet.begin(), currentFeatureSet.end(), featureToAddAtThisLevel) == currentFeatureSet.end() ){
-      //cout << "On level " << i+1 << " we added " << featureToAddAtThisLevel+1 << " to the  current set." << endl; 
-      currentFeatureSet.push_back(featureToAddAtThisLevel); //featureToAddAtThisLevel = k
+      currentFeatureSet.push_back(featureToAddAtThisLevel); 
         if (i<9){
           cout << "\nFeature set {";
           cout << currentFeatureSet[0]+1;
@@ -255,7 +252,7 @@ void backwardSearch(vector<vector<double>>& features, vector<int> & classType){
   
   
   for (int i=0; i<features.size(); i++){
-    cout << "On the " << i+1 << "\'th level of the search tree" << endl;
+    //cout << "On the " << i+1 << "\'th level of the search tree" << endl;
     
     
     
@@ -266,19 +263,23 @@ void backwardSearch(vector<vector<double>>& features, vector<int> & classType){
     
     
     for (int k=0; k<currentFeatureSet.size(); k++){ //1:04pm: changing features[i].size() to currentFeatures.size() 
+      
+      
       currentFeatureSet.erase(currentFeatureSet.begin()+k);
-      
-        
-      cout << "current k: " << k << endl;
-      
-      
+      cout << "        Using feature(s) {";
+      cout << currentFeatureSet[0]+1;
+      for (int i=1; i<currentFeatureSet.size(); i++){
+        cout<< "," << currentFeatureSet[i]+1;
+      }
+      cout << "} ";
       vector<vector<double>> zeroedFeatures = features;
       vector<int> tmpFeatureSet = currentFeatureSet;
+      
       featureIsolate(tmpFeatureSet, zeroedFeatures);
       
       
       accuracy = leave1OutCrossValidation(zeroedFeatures, classType); 
-      cout << "Accuracy: "<< accuracy << endl;
+      cout << "accuracy is "<< accuracy*100 <<"%"<< endl;
       if (accuracy > bestSoFarAccuracy) {
         cout << accuracy << endl;
         bestSoFarAccuracy = accuracy;
