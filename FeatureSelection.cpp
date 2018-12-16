@@ -316,8 +316,7 @@ void rSearch(vector<vector<double>>& features, vector<int> & classType)
   bool breakflag = false;
   double levelBest=0;
   double globalBest=0;
-  int levelIncorrect = 0;
-  int bestIncorrect = 0;
+  int levelIncorrect = globalIncorrect;
   for (int i=0; i<features[0].size(); i++){
     cout << "On the " << i+1 << "\'th level of the search tree" << endl;
     double bestSoFarAccuracy = 0;
@@ -326,16 +325,12 @@ void rSearch(vector<vector<double>>& features, vector<int> & classType)
     double accuracy;
     int prevIncorrect = 0;////////////////////////////////////////////////////////////////////////////////////////////
     int featureToAddAtThisLevel;
-    if (i==0){////////////////////////////////////////////////////////////////////////////////////////////////////////
-      //minIncorrect = globalIncorrect;/////////////////////////////////////////////////////////////////////////////////
-      levelIncorrect = globalIncorrect;/////////////////////////////////////////////////////////////////////////////////
-    }
     
     for (int k=0; k<features[i].size(); k++){
       accuracy = 0;/////////////////////////////////////////////////////////////////////////////////////////////////
       prevIncorrect = 0;/////////////////////////////////////////////////////////////////////////////////////////////
       if ( find(currentFeatureSet.begin(), currentFeatureSet.end(), k) == currentFeatureSet.end() ){ //if isEmpty(intersection(currentFeatureSet, k))
-        cout << "--Considering adding the " << k+1 << "feature" << endl;
+        cout << "--Considering adding the " << k+1 << " feature" << endl;
         vector<vector<double>> zeroedFeatures = features;
         vector<int> tmpFeatureSet = currentFeatureSet;
         tmpFeatureSet.push_back(k);
@@ -347,7 +342,6 @@ void rSearch(vector<vector<double>>& features, vector<int> & classType)
         cout << "Accuracy: "<< accuracy << endl;
       }
       if (accuracy > bestSoFarAccuracy) {
-        cout << "Best so Far Accuracy: "<< accuracy << endl;
         bestSoFarAccuracy = accuracy;
         minIncorrect = prevIncorrect;/////////////////////////////////////////////////////////////////////////////////
         featureToAddAtThisLevel = k;
@@ -366,7 +360,6 @@ void rSearch(vector<vector<double>>& features, vector<int> & classType)
       breakflag = false;
       if (globalBest < levelBest){
         globalBest = levelBest;
-        bestIncorrect = levelIncorrect;
         bestOverall = currentFeatureSet;
         bestOverall.push_back(featureToAddAtThisLevel);
       }
@@ -377,28 +370,12 @@ void rSearch(vector<vector<double>>& features, vector<int> & classType)
       cout << "(Warning, Accuracy has decreased! Continuing search in case of local maxima)" << endl; 
     }
     
-    
-    
-    
-    
     if ( find(currentFeatureSet.begin(), currentFeatureSet.end(), featureToAddAtThisLevel) == currentFeatureSet.end() ){
       cout << "On level " << i+1 << " we added " << featureToAddAtThisLevel+1 << " to the  current set." << endl; 
       currentFeatureSet.push_back(featureToAddAtThisLevel); //featureToAddAtThisLevel = k
       
     }
-    
-    // for (int i=0; i<currentFeatureSet.size(); i++){
-    //   if(i <currentFeatureSet.size()-1){
-    //     cout<< currentFeatureSet[i]+1 << ", ";
-    //   }
-    //   else{
-    //     cout<< currentFeatureSet[i]+1 << endl;
-    //   }
-    // }
   }
-  
-  
-  
   
   cout << bestOverall[0]+1;
   for (int i=1; i<bestOverall.size(); i++){
