@@ -4,13 +4,15 @@
 #include <fstream>
 #include <string>
 #include <limits>
+#include <chrono>
 using namespace std;
+using namespace std::chrono;
 bool readData(string filename, vector<vector<double>>& features, vector<int> &classType);
 vector<int>  nearestNeighbor(vector<vector<double>>& features, vector<int> & classType);
 void backwardSearch(vector<vector<double>>& features, vector<int> & classType);
 void rSearch(vector<vector<double>>& features, vector<int> & classType);
 double leave1OutCrossValidation(vector<vector<double>>& features, vector<int> &classType);
-double leave1OutCrossValidation_v2(vector<vector<double>>& features, vector<int> &classType, int& prevIncorrect);
+double leave1OutCrossValidation_v2(vector<vector<double>>& features, vector<int> &classType, int& prevIncorrect, int& minIncorrect);
 void featureIsolate(vector<int>& tmpFeatureSet, vector<vector<double>>& zeroedFeatures);
 
 
@@ -21,7 +23,7 @@ void featureIsolate(vector<int>& tmpFeatureSet, vector<vector<double>>& zeroedFe
 3. create variable that counts number of incorrect, update this var. by adding: 
   else {correct ++; //then, do another if: if (incorrect is greater than prevIncorrect, then return 0)}
   We return 0 because this feature already less accuarate than the best feature so far. -check
-4. must have a variable to store minIncorrect
+4. must have a variable to store minIncorrect. need a way to store the minIncorrect 
   */
 
 
@@ -125,7 +127,7 @@ double leave1OutCrossValidation(vector<vector<double>>& features, vector<int> &c
 }
 
 
-double leave1OutCrossValidation_v2(vector<vector<double>>& features, vector<int> &classType, int& prevIncorrect)
+double leave1OutCrossValidation_v2(vector<vector<double>>& features, vector<int> &classType, int& prevIncorrect, int& minIncorrect)
 {
   double tmpDist = 0.0;
   int nearestN = 0;
@@ -207,6 +209,7 @@ vector<int> nearestNeighbor(vector<vector<double>>& features, vector<int> & clas
         for (int i=0; i<bestOverall.size(); i++){
           cout << bestOverall[i]+1 << ", ";
         }
+        return bestOverall;
         break;
       }
       breakflag = true;
@@ -286,6 +289,7 @@ void backwardSearch(vector<vector<double>>& features, vector<int> & classType){
         for (int i=0; i<bestOverall.size(); i++){
           cout << bestOverall.at(i)+1 << ", ";
         }
+        return;
         break;
       }
       breakflag = true;
@@ -308,6 +312,7 @@ void rSearch(vector<vector<double>>& features, vector<int> & classType)
   vector<int> bestOverall;
   bool breakflag = false;
   double levelBest=0;
+  int levelIncorrect = 0;
   for (int i=0; i<features.size(); i++){
     cout << "On the " << i+1 << "\'th level of the search tree" << endl;
     double bestSoFarAccuracy = 0;
@@ -326,16 +331,18 @@ void rSearch(vector<vector<double>>& features, vector<int> & classType)
         
         
         //accuracy = leave1OutCrossValidation(zeroedFeatures, classType); //why k+1?
-        accuracy = leave1OutCrossValidation_v2(zeroedFeatures, classType, prevIncorrect);
+        accuracy = leave1OutCrossValidation_v2(zeroedFeatures, classType, prevIncorrect, minIncorrect);
       }
       if (accuracy > bestSoFarAccuracy) {
         cout << accuracy << endl;
         bestSoFarAccuracy = accuracy;
+        minIncorrect = prevIncorrect;
         featureToAddAtThisLevel = k;
       }
     }
     if (levelBest < bestSoFarAccuracy){
       levelBest = bestSoFarAccuracy;
+      levelIncorrect = minIncorrect;
       breakflag = false;
     }
     else{
@@ -343,6 +350,7 @@ void rSearch(vector<vector<double>>& features, vector<int> & classType)
         for (int i=0; i<bestOverall.size(); i++){
           cout << bestOverall[i]+1 << ", ";
         }
+        return;
         break;
       }
       breakflag = true;
@@ -371,8 +379,6 @@ int main()
   int choice; 
   
   
-  
-  
   cout << "Welcome to Rogelio's Feature Selection Algorithm." << endl;
   cout << "Type the  name of the file to test: ";
   cin >> inputfile;
@@ -390,21 +396,35 @@ int main()
     cout << "Running nearest neighbor with all "<< features[0].size() << " features, using \"leaving-one-out\" evaluation, I get an \naccuracy of " << leave1OutCrossValidation(features, classType)*100<< "%" << endl << endl;
     cout << "Beginning Search." << endl << endl;
     
+    auto start = high_resolution_clock::now(); 
     vector<int> bestFeatures = nearestNeighbor(features, classType);
-  
-    cout << endl;
+    auto stop = high_resolution_clock::now();
+    auto duration = duration_cast<milliseconds>(stop - start); 
+    cout << "Time taken by function: "
+         << duration.count() << " milliseconds" << endl;
   }
   else if (choice == 2){
     cout << "This dataset has " << features[0].size() << " features (not including the class attribute), with "<< classType.size() <<" instances." << endl << endl;
     cout << "Running nearest neighbor with all "<< features[0].size() << " features, using \"leaving-one-out\" evaluation, I get an \naccuracy of " << leave1OutCrossValidation(features, classType)*100<< "%" << endl << endl;
     cout << "Beginning Search." << endl << endl;
     
+    auto start = high_resolution_clock::now(); 
     backwardSearch(features, classType);
-    cout << endl;
+    auto stop = high_resolution_clock::now(); 
+    auto duration = duration_cast<milliseconds>(stop - start); 
+    cout << "Time taken by function: "
+         << duration.count() << " milliseconds" << endl;
   }
   else{
-    
-    cout << endl;
+    cout << "This dataset has " << features[0].size() << " features (not including the class attribute), with "<< classType.size() <<" instances." << endl << endl;
+    cout << "Running nearest neighbor with all "<< features[0].size() << " features, using \"leaving-one-out\" evaluation, I get an \naccuracy of " << leave1OutCrossValidation(features, classType)*100<< "%" << endl << endl;
+    cout << "Beginning Search." << endl << endl;
+    auto start = high_resolution_clock::now(); 
+    rSearch(features, classType);
+    auto stop = high_resolution_clock::now(); 
+    auto duration = duration_cast<milliseconds>(stop - start); 
+    cout << "Time taken by function: "
+         << duration.count() << " milliseconds" << endl;
   }
   
   
