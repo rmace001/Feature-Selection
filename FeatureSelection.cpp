@@ -174,7 +174,6 @@ vector<int> nearestNeighbor(vector<vector<double>>& features, vector<int> & clas
     int featureToAddAtThisLevel;
     for (int k=0; k<features[i].size(); k++){
       if ( find(currentFeatureSet.begin(), currentFeatureSet.end(), k) == currentFeatureSet.end() ){ //if isEmpty(intersection(currentFeatureSet, k))
-        
         vector<vector<double>> zeroedFeatures = features;
         vector<int> tmpFeatureSet = currentFeatureSet;
         tmpFeatureSet.push_back(k);
@@ -248,69 +247,66 @@ void backwardSearch(vector<vector<double>>& features, vector<int> & classType){
   vector<int> bestOverall = currentFeatureSet;
   bool breakflag = false;
   double levelBest=0;
-  
-  
-  
-  for (int i=0; i<features.size(); i++){
-    //cout << "On the " << i+1 << "\'th level of the search tree" << endl;
-    
-    
-    
+  double globalBest =0;
+  for (int i=0; i<features[0].size(); i++){
+
     double bestSoFarAccuracy = 0;
     double accuracy = 0;
     int featureToAddAtThisLevel;
-    
-    
     
     for (int k=0; k<currentFeatureSet.size(); k++){ //1:04pm: changing features[i].size() to currentFeatures.size() 
       
       
       currentFeatureSet.erase(currentFeatureSet.begin()+k);
-      cout << "        Using feature(s) {";
-      cout << currentFeatureSet[0]+1;
-      for (int i=1; i<currentFeatureSet.size(); i++){
-        cout<< "," << currentFeatureSet[i]+1;
+      if (currentFeatureSet.size() >=1){  
+        cout << "        Using feature(s) {";
+        cout << currentFeatureSet[0]+1;
+        for (int i=1; i<currentFeatureSet.size(); i++){
+          cout<< "," << currentFeatureSet[i]+1;
+        }
+        cout << "} ";
       }
-      cout << "} ";
       vector<vector<double>> zeroedFeatures = features;
       vector<int> tmpFeatureSet = currentFeatureSet;
       
       featureIsolate(tmpFeatureSet, zeroedFeatures);
-      
-      
       accuracy = leave1OutCrossValidation(zeroedFeatures, classType); 
       cout << "accuracy is "<< accuracy*100 <<"%"<< endl;
       if (accuracy > bestSoFarAccuracy) {
-        cout << accuracy << endl;
         bestSoFarAccuracy = accuracy;
         featureToAddAtThisLevel = k; //this is essentially featureToRemove
+        
       }
       currentFeatureSet.insert(currentFeatureSet.begin()+k,k);
     }
     if (levelBest < bestSoFarAccuracy){
+      
       levelBest = bestSoFarAccuracy;
-      breakflag = false;
+      if (globalBest < levelBest){
+        
+        globalBest = levelBest;
+        
+        bestOverall = currentFeatureSet;
+        bestOverall.erase(bestOverall.begin()+featureToAddAtThisLevel);
+      }
     }
     else{
-      if (breakflag){
-        for (int i=0; i<bestOverall.size(); i++){
-          cout << bestOverall.at(i)+1 << ", ";
-        }
-        //return;
-        break;
-      }
-      breakflag = true;
       cout << "(Warning, Accuracy has decreased! Continuing search in case of local maxima)" << endl; 
     }
-    
-    cout << "On level " << i+1 << " we remove " << featureToAddAtThisLevel+1 << " to the  current set." << endl; 
     currentFeatureSet.erase(currentFeatureSet.begin()+featureToAddAtThisLevel); //erase instead of push_back
-    bestOverall.erase(bestOverall.begin()+featureToAddAtThisLevel);
-    
-    if (!breakflag){
-      bestOverall = currentFeatureSet;
+    cout << "\nFeature set {";
+    cout << currentFeatureSet[0]+1;
+    for (int l=1; l<currentFeatureSet.size(); l++){
+      cout<< "," << currentFeatureSet[l]+1;
     }
+    cout << "} was best, accuracy is " << bestSoFarAccuracy*100 << "%\n \n";
   }
+  cout << "\nFinished Search!! The best feature subset is {";
+  cout << bestOverall[0]+1;
+  for (int i=1; i<bestOverall.size(); i++){
+    cout  << ", " << bestOverall[i]+1;
+  }
+  cout <<"}, which has an accuracy of " << globalBest*100 << "%"<< endl;
 }
 
 
