@@ -14,7 +14,7 @@ void rSearch(vector<vector<double>>& features, vector<int> & classType);
 double leave1OutCrossValidation(vector<vector<double>>& features, vector<int> &classType);
 double leave1OutCrossValidation_v2(vector<vector<double>>& features, vector<int> &classType, int& prevIncorrect, int& minIncorrect);
 void featureIsolate(vector<int>& tmpFeatureSet, vector<vector<double>>& zeroedFeatures);
-
+int globalIncorrect = 0;
 
 
 /*changes I am making to simulate Alpha-Beta Pruning
@@ -25,21 +25,6 @@ void featureIsolate(vector<int>& tmpFeatureSet, vector<vector<double>>& zeroedFe
   We return 0 because this feature already less accuarate than the best feature so far. -check
 4. must have a variable to store minIncorrect. need a way to store the minIncorrect 
   */
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -76,18 +61,6 @@ bool readData(string filename, vector<vector<double>>& features, vector<int> &cl
   return true;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
 //assume you have all the features, and hardcode the distance equation
 
 //features[][] should consist of all zeros besides the features in question. I don't need featureToAdd...
@@ -123,8 +96,20 @@ double leave1OutCrossValidation(vector<vector<double>>& features, vector<int> &c
     skippedI++;
   }
   cout << "correct: " << correct << endl;
+  globalIncorrect = 200-correct;
   return (correct/200);
 }
+
+
+
+
+
+
+
+
+
+
+
 
 
 double leave1OutCrossValidation_v2(vector<vector<double>>& features, vector<int> &classType, int& prevIncorrect, int& minIncorrect)
@@ -133,7 +118,6 @@ double leave1OutCrossValidation_v2(vector<vector<double>>& features, vector<int>
   int nearestN = 0;
   int skippedI = 0;
   double correct = 0;
-  double incorrect = 0;
   while (skippedI < 200){
     nearestN = 0;
     double curMinDist = numeric_limits<double>::infinity();
@@ -156,16 +140,23 @@ double leave1OutCrossValidation_v2(vector<vector<double>>& features, vector<int>
       correct++;
     }
     else{
-      incorrect++;
-      if (incorrect > prevIncorrect){
+      prevIncorrect++;///////////////////////////////////////////////////////////////////////////////////////////
+      if (prevIncorrect > minIncorrect){////////////////////////////////////////////////////////////////////////
         return 0;
       }
     }
     skippedI++;
   }
+  
   cout << "correct: " << correct << endl;
+  cout << "incorrect: " << prevIncorrect << endl;
+  
   return (correct/200);
 }
+
+
+
+
 
 
 
@@ -191,7 +182,7 @@ vector<int> nearestNeighbor(vector<vector<double>>& features, vector<int> & clas
         featureIsolate(tmpFeatureSet, zeroedFeatures);
         
         
-        accuracy = leave1OutCrossValidation(zeroedFeatures, classType); //why k+1?
+        accuracy = leave1OutCrossValidation(zeroedFeatures, classType); 
         
       }
       if (accuracy > bestSoFarAccuracy) {
@@ -209,17 +200,18 @@ vector<int> nearestNeighbor(vector<vector<double>>& features, vector<int> & clas
         for (int i=0; i<bestOverall.size(); i++){
           cout << bestOverall[i]+1 << ", ";
         }
-        return bestOverall;
+        //return bestOverall;
         break;
       }
       breakflag = true;
       cout << "(Warning, Accuracy has decreased! Continuing search in case of local maxima)" << endl; 
     }
     
-    
-    cout << "On level " << i+1 << " we added " << featureToAddAtThisLevel+1 << " to the  current set." << endl; 
-    currentFeatureSet.push_back(featureToAddAtThisLevel); //featureToAddAtThisLevel = k
-    bestOverall.push_back(featureToAddAtThisLevel);
+    if ( find(currentFeatureSet.begin(), currentFeatureSet.end(), featureToAddAtThisLevel) == currentFeatureSet.end() ){
+      cout << "On level " << i+1 << " we added " << featureToAddAtThisLevel+1 << " to the  current set." << endl; 
+      currentFeatureSet.push_back(featureToAddAtThisLevel); //featureToAddAtThisLevel = k
+      bestOverall.push_back(featureToAddAtThisLevel);
+    }
     if (!breakflag){
       bestOverall = currentFeatureSet;
     }
@@ -289,7 +281,7 @@ void backwardSearch(vector<vector<double>>& features, vector<int> & classType){
         for (int i=0; i<bestOverall.size(); i++){
           cout << bestOverall.at(i)+1 << ", ";
         }
-        return;
+        //return;
         break;
       }
       breakflag = true;
@@ -306,6 +298,15 @@ void backwardSearch(vector<vector<double>>& features, vector<int> & classType){
   }
 }
 
+
+
+
+
+
+
+
+
+
 void rSearch(vector<vector<double>>& features, vector<int> & classType)
 {
   vector<int> currentFeatureSet;
@@ -313,59 +314,88 @@ void rSearch(vector<vector<double>>& features, vector<int> & classType)
   bool breakflag = false;
   double levelBest=0;
   int levelIncorrect = 0;
-  for (int i=0; i<features.size(); i++){
-    cout << "On the " << i+1 << "\'th level of the search tree" << endl;
-    double bestSoFarAccuracy = 0;
-    int minIncorrect = 0;
-    double accuracy = 0;
-    int prevIncorrect = 0;
-    int featureToAddAtThisLevel;
-    for (int k=0; k<features[i].size(); k++){
-      if ( find(currentFeatureSet.begin(), currentFeatureSet.end(), k) == currentFeatureSet.end() ){ //if isEmpty(intersection(currentFeatureSet, k))
-        cout << "--Considering adding the " << k+1 << "feature" << endl;
-        
-        vector<vector<double>> zeroedFeatures = features;
-        vector<int> tmpFeatureSet = currentFeatureSet;
-        tmpFeatureSet.push_back(k);
-        featureIsolate(tmpFeatureSet, zeroedFeatures);
-        
-        
-        //accuracy = leave1OutCrossValidation(zeroedFeatures, classType); //why k+1?
-        accuracy = leave1OutCrossValidation_v2(zeroedFeatures, classType, prevIncorrect, minIncorrect);
+  if (!breakflag){
+    for (int i=0; i<features.size(); i++){
+      cout << "On the " << i+1 << "\'th level of the search tree" << endl;
+      double bestSoFarAccuracy = 0;
+      int minIncorrect = 0;///////////////////////////////
+      double accuracy = 0;
+      int prevIncorrect = 0;////////////////////////////////////////////////////////////////////////////////////////////
+      int featureToAddAtThisLevel;
+      if (i==0){////////////////////////////////////////////////////////////////////////////////////////////////////////
+        //minIncorrect = globalIncorrect;/////////////////////////////////////////////////////////////////////////////////
+        levelIncorrect = globalIncorrect;/////////////////////////////////////////////////////////////////////////////////
       }
-      if (accuracy > bestSoFarAccuracy) {
-        cout << accuracy << endl;
-        bestSoFarAccuracy = accuracy;
-        minIncorrect = prevIncorrect;
-        featureToAddAtThisLevel = k;
-      }
-    }
-    if (levelBest < bestSoFarAccuracy){
-      levelBest = bestSoFarAccuracy;
-      levelIncorrect = minIncorrect;
-      breakflag = false;
-    }
-    else{
-      if (breakflag){
-        for (int i=0; i<bestOverall.size(); i++){
-          cout << bestOverall[i]+1 << ", ";
+      
+      for (int k=0; k<features[i].size(); k++){
+        accuracy = 0;/////////////////////////////////////////////////////////////////////////////////////////////////
+        prevIncorrect = 0;/////////////////////////////////////////////////////////////////////////////////////////////
+        if ( find(currentFeatureSet.begin(), currentFeatureSet.end(), k) == currentFeatureSet.end() ){ //if isEmpty(intersection(currentFeatureSet, k))
+          cout << "--Considering adding the " << k+1 << "feature" << endl;
+          vector<vector<double>> zeroedFeatures = features;
+          vector<int> tmpFeatureSet = currentFeatureSet;
+          tmpFeatureSet.push_back(k);
+          featureIsolate(tmpFeatureSet, zeroedFeatures);
+          
+          
+          
+          accuracy = leave1OutCrossValidation_v2(zeroedFeatures, classType, prevIncorrect, levelIncorrect);
         }
-        return;
-        break;
+        
+        
+        
+        
+        
+        
+        if (accuracy > bestSoFarAccuracy) {
+          cout << "Best so Far Accuracy: "<< accuracy << endl;
+          bestSoFarAccuracy = accuracy;
+          minIncorrect = prevIncorrect;/////////////////////////////////////////////////////////////////////////////////
+          featureToAddAtThisLevel = k;
+        }
       }
-      breakflag = true;
-      cout << "(Warning, Accuracy has decreased! Continuing search in case of local maxima)" << endl; 
-    }
-    
-    
-    cout << "On level " << i+1 << " we added " << featureToAddAtThisLevel+1 << " to the  current set." << endl; 
-    currentFeatureSet.push_back(featureToAddAtThisLevel); //featureToAddAtThisLevel = k
-    bestOverall.push_back(featureToAddAtThisLevel);
-    if (!breakflag){
-      bestOverall = currentFeatureSet;
+      
+      
+      
+      
+      
+      if (levelBest < bestSoFarAccuracy)
+      {
+        levelBest = bestSoFarAccuracy;
+        cout << "Level Best Accuracy: " << levelBest << endl;
+        levelIncorrect = minIncorrect;
+        breakflag = false;
+      }
+      else
+      {
+        if (breakflag){
+          cout << bestOverall[0]+1;
+          for (int i=1; i<bestOverall.size(); i++){
+            cout  << ", " << bestOverall[i]+1;
+          }
+          
+          //return;
+          break;
+        }
+        breakflag = true;
+        cout << "(Warning, Accuracy has decreased! Continuing search in case of local maxima)" << endl; 
+      }
+      
+      
+      
+      
+      
+      if ( find(currentFeatureSet.begin(), currentFeatureSet.end(), featureToAddAtThisLevel) == currentFeatureSet.end() ){
+        cout << "On level " << i+1 << " we added " << featureToAddAtThisLevel+1 << " to the  current set." << endl; 
+        currentFeatureSet.push_back(featureToAddAtThisLevel); //featureToAddAtThisLevel = k
+        bestOverall.push_back(featureToAddAtThisLevel);
+      }
+      if (!breakflag){
+        bestOverall = currentFeatureSet;
+      }
     }
   }
-  return ;
+  return;
 }
 
 
@@ -423,7 +453,7 @@ int main()
     rSearch(features, classType);
     auto stop = high_resolution_clock::now(); 
     auto duration = duration_cast<milliseconds>(stop - start); 
-    cout << "Time taken by function: "
+    cout << endl <<"Time taken by function: "
          << duration.count() << " milliseconds" << endl;
   }
   
