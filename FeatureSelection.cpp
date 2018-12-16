@@ -8,12 +8,21 @@ using namespace std;
 bool readData(string filename, vector<vector<double>>& features, vector<int> &classType);
 vector<int>  nearestNeighbor(vector<vector<double>>& features, vector<int> & classType);
 void backwardSearch(vector<vector<double>>& features, vector<int> & classType);
+void rSearch(vector<vector<double>>& features, vector<int> & classType);
 double leave1OutCrossValidation(vector<vector<double>>& features, vector<int> &classType);
+double leave1OutCrossValidation_v2(vector<vector<double>>& features, vector<int> &classType, int& prevIncorrect);
 void featureIsolate(vector<int>& tmpFeatureSet, vector<vector<double>>& zeroedFeatures);
 
 
 
-
+/*changes I am making to simulate Alpha-Beta Pruning
+1. create a third function named: rSearch and mimic NearestNeighbor -check
+2. create else{} right after the correct++ if statement -check
+3. create variable that counts number of incorrect, update this var. by adding: 
+  else {correct ++; //then, do another if: if (incorrect is greater than prevIncorrect, then return 0)}
+  We return 0 because this feature already less accuarate than the best feature so far. -check
+4. must have a variable to store minIncorrect
+  */
 
 
 
@@ -115,6 +124,49 @@ double leave1OutCrossValidation(vector<vector<double>>& features, vector<int> &c
   return (correct/200);
 }
 
+
+double leave1OutCrossValidation_v2(vector<vector<double>>& features, vector<int> &classType, int& prevIncorrect)
+{
+  double tmpDist = 0.0;
+  int nearestN = 0;
+  int skippedI = 0;
+  double correct = 0;
+  double incorrect = 0;
+  while (skippedI < 200){
+    nearestN = 0;
+    double curMinDist = numeric_limits<double>::infinity();
+    for (int i=0; i<features.size(); i++){
+      
+      tmpDist = 0.0;
+      if (i != skippedI){
+        for (int j=0; j<features[0].size(); j++){
+          tmpDist += ((features[skippedI][j]-features[i][j])*(features[skippedI][j]-features[i][j]));
+        }
+      
+        tmpDist = sqrt(tmpDist);
+        if (tmpDist < curMinDist){
+          curMinDist = tmpDist;
+          nearestN = i;
+        }
+      }
+    }
+    if (classType[skippedI] == classType[nearestN]){
+      correct++;
+    }
+    else{
+      incorrect++;
+      if (incorrect > prevIncorrect){
+        return 0;
+      }
+    }
+    skippedI++;
+  }
+  cout << "correct: " << correct << endl;
+  return (correct/200);
+}
+
+
+
 //Might want to have this function return a vector, which is vector currentFeatureSet
 vector<int> nearestNeighbor(vector<vector<double>>& features, vector<int> & classType)
 {
@@ -185,12 +237,6 @@ void featureIsolate(vector<int>& tmpFeatureSet, vector<vector<double>>& zeroedFe
 }
 
 
-
-
-
-//the cheat is to push it back again at the end. where is the end? where should i readd? 
-
-
 void backwardSearch(vector<vector<double>>& features, vector<int> & classType){
   vector<int> currentFeatureSet = {0,1,2,3,4,5,6,7,8,9};
   vector<int> bestOverall = currentFeatureSet;
@@ -256,7 +302,63 @@ void backwardSearch(vector<vector<double>>& features, vector<int> & classType){
   }
 }
 
-
+void rSearch(vector<vector<double>>& features, vector<int> & classType)
+{
+  vector<int> currentFeatureSet;
+  vector<int> bestOverall;
+  bool breakflag = false;
+  double levelBest=0;
+  for (int i=0; i<features.size(); i++){
+    cout << "On the " << i+1 << "\'th level of the search tree" << endl;
+    double bestSoFarAccuracy = 0;
+    int minIncorrect = 0;
+    double accuracy = 0;
+    int prevIncorrect = 0;
+    int featureToAddAtThisLevel;
+    for (int k=0; k<features[i].size(); k++){
+      if ( find(currentFeatureSet.begin(), currentFeatureSet.end(), k) == currentFeatureSet.end() ){ //if isEmpty(intersection(currentFeatureSet, k))
+        cout << "--Considering adding the " << k+1 << "feature" << endl;
+        
+        vector<vector<double>> zeroedFeatures = features;
+        vector<int> tmpFeatureSet = currentFeatureSet;
+        tmpFeatureSet.push_back(k);
+        featureIsolate(tmpFeatureSet, zeroedFeatures);
+        
+        
+        //accuracy = leave1OutCrossValidation(zeroedFeatures, classType); //why k+1?
+        accuracy = leave1OutCrossValidation_v2(zeroedFeatures, classType, prevIncorrect);
+      }
+      if (accuracy > bestSoFarAccuracy) {
+        cout << accuracy << endl;
+        bestSoFarAccuracy = accuracy;
+        featureToAddAtThisLevel = k;
+      }
+    }
+    if (levelBest < bestSoFarAccuracy){
+      levelBest = bestSoFarAccuracy;
+      breakflag = false;
+    }
+    else{
+      if (breakflag){
+        for (int i=0; i<bestOverall.size(); i++){
+          cout << bestOverall[i]+1 << ", ";
+        }
+        break;
+      }
+      breakflag = true;
+      cout << "(Warning, Accuracy has decreased! Continuing search in case of local maxima)" << endl; 
+    }
+    
+    
+    cout << "On level " << i+1 << " we added " << featureToAddAtThisLevel+1 << " to the  current set." << endl; 
+    currentFeatureSet.push_back(featureToAddAtThisLevel); //featureToAddAtThisLevel = k
+    bestOverall.push_back(featureToAddAtThisLevel);
+    if (!breakflag){
+      bestOverall = currentFeatureSet;
+    }
+  }
+  return ;
+}
 
 
 
@@ -269,19 +371,16 @@ int main()
   int choice; 
   
   
-  //by this point, I should have two vectors: 
-  //one for the instance class type, 
-  //another 2D vector for the set of features per instance
   
   
-  cout << "Welcome to Rogelio Macedo's Feature Selection Algorithm." << endl;
+  cout << "Welcome to Rogelio's Feature Selection Algorithm." << endl;
   cout << "Type the  name of the file to test: ";
   cin >> inputfile;
   cout << endl;
   cout << "Type the number of the algorithm you you want to run." << endl << endl;
   cout << "    1) Foward Selection" << endl;
   cout << "    2) Backward Elimination" << endl;
-  cout << "    3) Rogelio's Special Algorithm." << endl << endl;
+  cout << "    3) rSearch Special Algorithm." << endl << endl;
   cin >> choice; 
   //return if file not read properly
   if (!readData(inputfile, features, classType))
