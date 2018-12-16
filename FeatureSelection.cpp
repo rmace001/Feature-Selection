@@ -95,7 +95,7 @@ double leave1OutCrossValidation(vector<vector<double>>& features, vector<int> &c
     }
     skippedI++;
   }
-  cout << "correct: " << correct << endl;
+  // cout << "correct: " << correct << endl;
   globalIncorrect = 200-correct;
   return (correct/200);
 }
@@ -148,8 +148,8 @@ double leave1OutCrossValidation_v2(vector<vector<double>>& features, vector<int>
     skippedI++;
   }
   
-  cout << "correct: " << correct << endl;
-  cout << "incorrect: " << prevIncorrect << endl;
+  // cout << "correct: " << correct << endl;
+  // cout << "incorrect: " << prevIncorrect << endl;
   
   return (correct/200);
 }
@@ -179,14 +179,16 @@ vector<int> nearestNeighbor(vector<vector<double>>& features, vector<int> & clas
         vector<vector<double>> zeroedFeatures = features;
         vector<int> tmpFeatureSet = currentFeatureSet;
         tmpFeatureSet.push_back(k);
+        for (int i=0; i<tmpFeatureSet.size(); i++){
+          cout<< tmpFeatureSet[i]+1 << ", ";
+        }
         featureIsolate(tmpFeatureSet, zeroedFeatures);
         
         
         accuracy = leave1OutCrossValidation(zeroedFeatures, classType); 
-        
+        cout << "Accuracy: "<< accuracy << endl;
       }
       if (accuracy > bestSoFarAccuracy) {
-        cout << accuracy << endl;
         bestSoFarAccuracy = accuracy;
         featureToAddAtThisLevel = k;
       }
@@ -255,16 +257,16 @@ void backwardSearch(vector<vector<double>>& features, vector<int> & classType){
       currentFeatureSet.erase(currentFeatureSet.begin()+k);
       
         
-        cout << "current k: " << k << endl;
-        
-        
-        vector<vector<double>> zeroedFeatures = features;
-        vector<int> tmpFeatureSet = currentFeatureSet;
-        featureIsolate(tmpFeatureSet, zeroedFeatures);
-        
-        
-        accuracy = leave1OutCrossValidation(zeroedFeatures, classType); 
-        
+      cout << "current k: " << k << endl;
+      
+      
+      vector<vector<double>> zeroedFeatures = features;
+      vector<int> tmpFeatureSet = currentFeatureSet;
+      featureIsolate(tmpFeatureSet, zeroedFeatures);
+      
+      
+      accuracy = leave1OutCrossValidation(zeroedFeatures, classType); 
+      cout << "Accuracy: "<< accuracy << endl;
       if (accuracy > bestSoFarAccuracy) {
         cout << accuracy << endl;
         bestSoFarAccuracy = accuracy;
@@ -337,8 +339,12 @@ void rSearch(vector<vector<double>>& features, vector<int> & classType)
         vector<vector<double>> zeroedFeatures = features;
         vector<int> tmpFeatureSet = currentFeatureSet;
         tmpFeatureSet.push_back(k);
+        for (int i=0; i<tmpFeatureSet.size(); i++){
+          cout<< tmpFeatureSet[i]+1 << ", ";
+        }
         featureIsolate(tmpFeatureSet, zeroedFeatures);
         accuracy = leave1OutCrossValidation_v2(zeroedFeatures, classType, prevIncorrect, levelIncorrect);
+        cout << "Accuracy: "<< accuracy << endl;
       }
       if (accuracy > bestSoFarAccuracy) {
         cout << "Best so Far Accuracy: "<< accuracy << endl;
@@ -375,20 +381,20 @@ void rSearch(vector<vector<double>>& features, vector<int> & classType)
     
     
     
-    //if ( find(currentFeatureSet.begin(), currentFeatureSet.end(), featureToAddAtThisLevel) == currentFeatureSet.end() ){
+    if ( find(currentFeatureSet.begin(), currentFeatureSet.end(), featureToAddAtThisLevel) == currentFeatureSet.end() ){
       cout << "On level " << i+1 << " we added " << featureToAddAtThisLevel+1 << " to the  current set." << endl; 
       currentFeatureSet.push_back(featureToAddAtThisLevel); //featureToAddAtThisLevel = k
       
-    //}
-    
-    for (int i=0; i<currentFeatureSet.size(); i++){
-      if(i <currentFeatureSet.size()-1){
-        cout<< currentFeatureSet[i]+1 << ", ";
-      }
-      else{
-        cout<< currentFeatureSet[i]+1 << endl;
-      }
     }
+    
+    // for (int i=0; i<currentFeatureSet.size(); i++){
+    //   if(i <currentFeatureSet.size()-1){
+    //     cout<< currentFeatureSet[i]+1 << ", ";
+    //   }
+    //   else{
+    //     cout<< currentFeatureSet[i]+1 << endl;
+    //   }
+    // }
   }
   
   
