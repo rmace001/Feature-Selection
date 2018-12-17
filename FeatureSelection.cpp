@@ -30,34 +30,85 @@ int globalIncorrect = 0;
 
 bool readData(string filename, vector<vector<double>>& features, vector<int> &classType)
 {
-  //if (filename == "large100.txt") -> must redo this function to accomodate
-  ifstream fin; 
-  fin.open(filename);
-  double temp;
-  int row = 0;
-  int count = 2;
-  if (!fin.is_open()){
-    cout << "Could not open file: " << filename << endl;
-    return false;
-  }
-  else {
-    fin >> temp;
-    classType.push_back( (int) temp);
-    features.push_back(vector<double>());
-    while (fin >> temp){
-      if (count <= 11){
-        features[row].push_back(temp); 
-        count++;
-      }
-      else{
-        row++;
-        count = 2;
-        classType.push_back( (int) temp);
-        features.push_back(vector<double>());
+  if (filename == "small100.txt" || filename == "108.txt"){
+    ifstream fin; 
+    fin.open(filename);
+    double temp;
+    int row = 0;
+    int count = 2;
+    if (!fin.is_open()){
+      cout << "Could not open file: " << filename << endl;
+      return false;
+    }
+    else {
+      fin >> temp;
+      classType.push_back( (int) temp);
+      features.push_back(vector<double>());
+      while (fin >> temp){
+        if (count <= 11){
+          features[row].push_back(temp); 
+          count++;
+        }
+        else{
+          row++;
+          count = 2;
+          classType.push_back( (int) temp);
+          features.push_back(vector<double>());
+        }
       }
     }
+    fin.close();
   }
-  fin.close();
+  else{
+    ifstream fin; 
+    fin.open(filename);
+    double temp;
+    int row = 0;
+    int count = 2;
+    if (!fin.is_open()){
+      cout << "Could not open file: " << filename << endl;
+      return false;
+    }
+    else {
+      fin >> temp;
+      classType.push_back( (int) temp);
+      features.push_back(vector<double>());
+      while (fin >> temp){
+        if (count <= 101){
+          features[row].push_back(temp); 
+          count++;
+        }
+        else{
+          row++;
+          count = 2;
+          classType.push_back( (int) temp);
+          features.push_back(vector<double>());
+        }
+      }
+    }
+    fin.close();
+  }
+  
+  // for (int i=0; i<features.size(); i++){
+  //   cout << classType[i] << "   ";
+  //   for (int j=0; j<features[i].size(); j++){
+  //     cout << features[i][j] << "   ";  
+  //   }
+  //   cout << endl;
+  // }
+  
+  // cout << "Testing sizes of classType: " << classType.size() << endl;
+  // cout << "Testing sizes of featuresROW: " << features.size() << endl;
+
+  // for (int i=0; i<features.size(); i++){
+  //   cout << "Testing sizes of featuresCOL: " << i << ' '<<features[i].size() << endl;
+  // }
+  
+  
+  
+  
+  
+  
   return true;
 }
 
@@ -165,7 +216,6 @@ vector<int> nearestNeighbor(vector<vector<double>>& features, vector<int> & clas
 {
   vector<int> currentFeatureSet;
   vector<int> bestOverall;
-  bool breakflag = false;
   double globalBest=0;
   double levelBest=0;
   for (int i=0; i<features[0].size(); i++){
@@ -203,13 +253,13 @@ vector<int> nearestNeighbor(vector<vector<double>>& features, vector<int> & clas
       }
     }
     else{
-      if (i<9)
+      if (i<features[0].size()-1)
         cout << "\n(Warning, Accuracy has decreased! Continuing search in case of local maxima)" ; 
     }
     
     if ( find(currentFeatureSet.begin(), currentFeatureSet.end(), featureToAddAtThisLevel) == currentFeatureSet.end() ){
       currentFeatureSet.push_back(featureToAddAtThisLevel); 
-        if (i<9){
+        if (i<features[0].size()-1){
           cout << "\nFeature set {";
           cout << currentFeatureSet[0]+1;
           for (int l=1; l<currentFeatureSet.size(); l++){
@@ -322,13 +372,12 @@ void rSearch(vector<vector<double>>& features, vector<int> & classType)
 {
   vector<int> currentFeatureSet;
   vector<int> bestOverall;
-  bool breakflag = false;
   double levelBest=0;
   double globalBest=0;
   int levelIncorrect = globalIncorrect;
   for (int i=0; i<features[0].size(); i++){
     double bestSoFarAccuracy = 0;
-    levelBest=0;
+    //levelBest=0;
     int minIncorrect = 0;///////////////////////////////
     double accuracy;
     int prevIncorrect = 0;////////////////////////////////////////////////////////////////////////////////////////////
@@ -337,7 +386,6 @@ void rSearch(vector<vector<double>>& features, vector<int> & classType)
       accuracy = 0;/////////////////////////////////////////////////////////////////////////////////////////////////
       prevIncorrect = 0;/////////////////////////////////////////////////////////////////////////////////////////////
       if ( find(currentFeatureSet.begin(), currentFeatureSet.end(), k) == currentFeatureSet.end() ){ //if isEmpty(intersection(currentFeatureSet, k))
-        
         vector<vector<double>> zeroedFeatures = features;
         vector<int> tmpFeatureSet = currentFeatureSet;
         tmpFeatureSet.push_back(k);
@@ -357,16 +405,10 @@ void rSearch(vector<vector<double>>& features, vector<int> & classType)
         featureToAddAtThisLevel = k;
       }
     }
-    
-    
-    
-    
-    
     if (levelBest < bestSoFarAccuracy)
     {
       levelBest = bestSoFarAccuracy;
       levelIncorrect = minIncorrect;
-      breakflag = false;
       if (globalBest < levelBest){
         globalBest = levelBest;
         bestOverall = currentFeatureSet;
@@ -375,13 +417,13 @@ void rSearch(vector<vector<double>>& features, vector<int> & classType)
     }
     else
     {
-      if (i<9)
+      if (i<features[0].size()-1)
         cout << "\n(Warning, Accuracy has decreased! Continuing search in case of local maxima)\n"; 
     }
     
     if ( find(currentFeatureSet.begin(), currentFeatureSet.end(), featureToAddAtThisLevel) == currentFeatureSet.end() ){
       currentFeatureSet.push_back(featureToAddAtThisLevel); //featureToAddAtThisLevel = k
-      if (i<9){
+      if (i<features[0].size()-1){
           cout << "\nFeature set {";
           cout << currentFeatureSet[0]+1;
           for (int l=1; l<currentFeatureSet.size(); l++){
@@ -432,9 +474,9 @@ int main()
     auto start = high_resolution_clock::now(); 
     vector<int> bestFeatures = nearestNeighbor(features, classType);
     auto stop = high_resolution_clock::now();
-    auto duration = duration_cast<milliseconds>(stop - start); 
+    auto duration = duration_cast<seconds>(stop - start); 
     cout << "Time taken by function: "
-         << duration.count() << " milliseconds" << endl;
+        << duration.count() << " seconds" << endl;
   }
   else if (choice == 2){
     cout << "This dataset has " << features[0].size() << " features (not including the class attribute), with "<< classType.size() <<" instances." << endl << endl;
@@ -444,9 +486,9 @@ int main()
     auto start = high_resolution_clock::now(); 
     backwardSearch(features, classType);
     auto stop = high_resolution_clock::now(); 
-    auto duration = duration_cast<milliseconds>(stop - start); 
+    auto duration = duration_cast<seconds>(stop - start); 
     cout << "Time taken by function: "
-         << duration.count() << " milliseconds" << endl;
+        << duration.count() << " seconds" << endl;
   }
   else{
     cout << "This dataset has " << features[0].size() << " features (not including the class attribute), with "<< classType.size() <<" instances." << endl << endl;
@@ -455,9 +497,9 @@ int main()
     auto start = high_resolution_clock::now(); 
     rSearch(features, classType);
     auto stop = high_resolution_clock::now(); 
-    auto duration = duration_cast<milliseconds>(stop - start); 
+    auto duration = duration_cast<seconds>(stop - start); 
     cout << endl <<"Time taken by function: "
-         << duration.count() << " milliseconds" << endl;
+        << duration.count() << " seconds" << endl;
   }
   
   
