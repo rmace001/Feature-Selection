@@ -8,29 +8,18 @@
 using namespace std;
 using namespace std::chrono;
 bool readData(string filename, vector<vector<double>>& features, vector<int> &classType);
-vector<int>  nearestNeighbor(vector<vector<double>>& features, vector<int> & classType);
-void backwardSearch(vector<vector<double>>& features, vector<int> & classType);
-void rSearch(vector<vector<double>>& features, vector<int> & classType);
+vector<int>  nearestNeighbor(vector<vector<double>>& features, vector<int> & classType, vector<double> & AccuracyVector);
+void backwardSearch(vector<vector<double>>& features, vector<int> & classType, vector<double> & AccuracyVector);
+void rSearch(vector<vector<double>>& features, vector<int> & classType, vector<double> & AccuracyVector);
 double leave1OutCrossValidation(vector<vector<double>>& features, vector<int> &classType);
 double leave1OutCrossValidation_v2(vector<vector<double>>& features, vector<int> &classType, int& prevIncorrect, int& minIncorrect);
 void featureIsolate(vector<int>& tmpFeatureSet, vector<vector<double>>& zeroedFeatures);
 int globalIncorrect = 0;
 
 
-/*changes I am making to simulate Alpha-Beta Pruning
-1. create a third function named: rSearch and mimic NearestNeighbor -check
-2. create else{} right after the correct++ if statement -check
-3. create variable that counts number of incorrect, update this var. by adding: 
-  else {correct ++; //then, do another if: if (incorrect is greater than prevIncorrect, then return 0)}
-  We return 0 because this feature already less accuarate than the best feature so far. -check
-4. must have a variable to store minIncorrect. need a way to store the minIncorrect 
-  */
-
-
-
 bool readData(string filename, vector<vector<double>>& features, vector<int> &classType)
 {
-  if (filename == "small100.txt" || filename == "108.txt"){
+  if (filename == "small99.txt" || filename == "108.txt"){
     ifstream fin; 
     fin.open(filename);
     double temp;
@@ -89,34 +78,10 @@ bool readData(string filename, vector<vector<double>>& features, vector<int> &cl
     fin.close();
   }
   
-  // for (int i=0; i<features.size(); i++){
-  //   cout << classType[i] << "   ";
-  //   for (int j=0; j<features[i].size(); j++){
-  //     cout << features[i][j] << "   ";  
-  //   }
-  //   cout << endl;
-  // }
-  
-  // cout << "Testing sizes of classType: " << classType.size() << endl;
-  // cout << "Testing sizes of featuresROW: " << features.size() << endl;
-
-  // for (int i=0; i<features.size(); i++){
-  //   cout << "Testing sizes of featuresCOL: " << i << ' '<<features[i].size() << endl;
-  // }
-  
-  
-  
-  
-  
   
   return true;
 }
 
-//assume you have all the features, and hardcode the distance equation
-
-//features[][] should consist of all zeros besides the features in question. I don't need featureToAdd...
-//however, featureToAdd should be passed in to the function that zero's out all features currentFeatureSet+featureToAdd 
-//might want to use a tempFeatureSet, and if its more accurate: currentFeatureSet=tempFeatureSet
 double leave1OutCrossValidation(vector<vector<double>>& features, vector<int> &classType)
 {
   double tmpDist = 0.0;
@@ -150,16 +115,6 @@ double leave1OutCrossValidation(vector<vector<double>>& features, vector<int> &c
   globalIncorrect = 200-correct;
   return (correct/200);
 }
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -206,13 +161,8 @@ double leave1OutCrossValidation_v2(vector<vector<double>>& features, vector<int>
 }
 
 
-
-
-
-
-
 //Might want to have this function return a vector, which is vector currentFeatureSet
-vector<int> nearestNeighbor(vector<vector<double>>& features, vector<int> & classType)
+vector<int> nearestNeighbor(vector<vector<double>>& features, vector<int> & classType, vector<double> & AccuracyVector)
 {
   vector<int> currentFeatureSet;
   vector<int> bestOverall;
@@ -238,6 +188,7 @@ vector<int> nearestNeighbor(vector<vector<double>>& features, vector<int> & clas
         
         accuracy = leave1OutCrossValidation(zeroedFeatures, classType); 
         cout << "accuracy is "<< accuracy*100 <<"%"<< endl;
+        AccuracyVector.push_back(accuracy);
       }
       if (accuracy > bestSoFarAccuracy) {
         bestSoFarAccuracy = accuracy;
@@ -292,13 +243,23 @@ void featureIsolate(vector<int>& tmpFeatureSet, vector<vector<double>>& zeroedFe
 }
 
 
-void backwardSearch(vector<vector<double>>& features, vector<int> & classType){
-  vector<int> currentFeatureSet = {0,1,2,3,4,5,6,7,8,9};
-  vector<int> bestOverall = currentFeatureSet;
+void backwardSearch(vector<vector<double>>& features, vector<int> & classType, vector<double> & AccuracyVector){
+  vector<int> currentFeatureSet;
+  
+  
+  for (int i=0; i<features[0].size(); i++){
+    currentFeatureSet.push_back(i);
+  }
+  for (int i=0; i<currentFeatureSet.size(); i++){
+    cout << currentFeatureSet[i];
+  }
+  
+  cout << endl;
+  vector<int> bestOverall;// = currentFeatureSet;
   bool breakflag = false;
   double levelBest=0;
   double globalBest =0;
-  for (int i=0; i<features[0].size(); i++){
+  for (int i=0; i<currentFeatureSet.size(); i++){
 
     double bestSoFarAccuracy = 0;
     double accuracy = 0;
@@ -321,6 +282,7 @@ void backwardSearch(vector<vector<double>>& features, vector<int> & classType){
       
       featureIsolate(tmpFeatureSet, zeroedFeatures);
       accuracy = leave1OutCrossValidation(zeroedFeatures, classType); 
+      AccuracyVector.push_back(accuracy);
       cout << "accuracy is "<< accuracy*100 <<"%"<< endl;
       if (accuracy > bestSoFarAccuracy) {
         bestSoFarAccuracy = accuracy;
@@ -337,6 +299,7 @@ void backwardSearch(vector<vector<double>>& features, vector<int> & classType){
         globalBest = levelBest;
         
         bestOverall = currentFeatureSet;
+        //bestOverall.push_back(featureToAddAtThisLevel);
         bestOverall.erase(bestOverall.begin()+featureToAddAtThisLevel);
       }
     }
@@ -368,7 +331,7 @@ void backwardSearch(vector<vector<double>>& features, vector<int> & classType){
 
 
 
-void rSearch(vector<vector<double>>& features, vector<int> & classType)
+void rSearch(vector<vector<double>>& features, vector<int> & classType, vector<double> & AccuracyVector)
 {
   vector<int> currentFeatureSet;
   vector<int> bestOverall;
@@ -398,6 +361,7 @@ void rSearch(vector<vector<double>>& features, vector<int> & classType)
         featureIsolate(tmpFeatureSet, zeroedFeatures);
         accuracy = leave1OutCrossValidation_v2(zeroedFeatures, classType, prevIncorrect, levelIncorrect);
         cout << "accuracy is "<< accuracy*100 <<"%"<< endl;
+        AccuracyVector.push_back(accuracy);
       }
       if (accuracy > bestSoFarAccuracy) {
         bestSoFarAccuracy = accuracy;
@@ -450,6 +414,7 @@ int main()
   //data vectors
   vector<vector<double>> features;
   vector<int> classType;
+  vector<double> AccuracyVector;
   string inputfile; 
   int choice; 
   
@@ -472,7 +437,7 @@ int main()
     cout << "Beginning Search." << endl << endl;
     
     auto start = high_resolution_clock::now(); 
-    vector<int> bestFeatures = nearestNeighbor(features, classType);
+    vector<int> bestFeatures = nearestNeighbor(features, classType, AccuracyVector);
     auto stop = high_resolution_clock::now();
     auto duration = duration_cast<seconds>(stop - start); 
     cout << "Time taken by function: "
@@ -484,7 +449,7 @@ int main()
     cout << "Beginning Search." << endl << endl;
     
     auto start = high_resolution_clock::now(); 
-    backwardSearch(features, classType);
+    backwardSearch(features, classType, AccuracyVector);
     auto stop = high_resolution_clock::now(); 
     auto duration = duration_cast<seconds>(stop - start); 
     cout << "Time taken by function: "
@@ -495,16 +460,19 @@ int main()
     cout << "Running nearest neighbor with all "<< features[0].size() << " features, using \"leaving-one-out\" evaluation, I get an \naccuracy of " << leave1OutCrossValidation(features, classType)*100<< "%" << endl << endl;
     cout << "Beginning Search." << endl << endl;
     auto start = high_resolution_clock::now(); 
-    rSearch(features, classType);
+    rSearch(features, classType, AccuracyVector);
     auto stop = high_resolution_clock::now(); 
     auto duration = duration_cast<seconds>(stop - start); 
     cout << endl <<"Time taken by function: "
         << duration.count() << " seconds" << endl;
   }
+  cout << AccuracyVector.size();
+  // cout << "Accuracies" << endl;
+  // for (int i=0; i<AccuracyVector.size(); i++){
+  //   cout << AccuracyVector[i]*100 << "\n";
+  // }
   
-  
-  
-  
+  cout << endl;
   
   
   
@@ -513,29 +481,3 @@ int main()
 }
 
 
-
-
-
-/////////////////////////////////////////////////////////////////////
-/*Test that have passed:
-
-
-Test 1: Verify that you read everything correctly (for small99.txt) by printing the data and the vector sizes
- for (int i=0; i<200; i++){
-    cout << classType[i] << "   ";
-    for (int j=0; j<10; j++){
-      cout << features[i][j] << "   ";  
-    }
-    cout << endl;
-  }
-  
-  cout << "Testing sizes of classType: " << classType.size() << endl;
-  cout << "Testing sizes of featuresROW: " << features.size() << endl;
-
-  for (int i=0; i<features.size(); i++){
-    cout << "Testing sizes of featuresCOL: " << i << ' '<<features[i].size() << endl;
-  }
-  
-
-
-*/
